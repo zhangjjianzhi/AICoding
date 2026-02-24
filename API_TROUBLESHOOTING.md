@@ -61,7 +61,7 @@ complete("分析简历", {
 
 **配置状态**:
 ```env
-MOONSHOT_API_KEY=sk-GoDtCxIEBexNUxRw6R2ae55xE8dvNpEh5OOlQ7paXhugOdCW
+MOONSHOT_API_KEY=XXX
 ```
 
 ✅ API Key 配置正确

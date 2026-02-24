@@ -1,8 +1,7 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { streamText } from 'ai';
 
-// 使用 Node.js runtime 而不是 edge runtime
-// export const runtime = 'edge';
+export const maxDuration = 60;
 
 const moonshot = createOpenAICompatible({
   name: 'moonshot',
@@ -68,7 +67,12 @@ ${resume}`,
     });
 
     console.log('[API] Stream created, returning response', result);
-    return result.toTextStreamResponse();
+    return result.toTextStreamResponse({
+      headers: {
+        'Transfer-Encoding': 'chunked',
+        'Connection': 'keep-alive',
+      },
+    });
   } catch (error) {
     console.error('[API] Error in /api/optimize:', error);
     return new Response(
