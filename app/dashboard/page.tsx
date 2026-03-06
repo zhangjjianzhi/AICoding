@@ -17,9 +17,9 @@ export default function DashboardPage() {
     complete,
     stop,
     setCompletion,
-  } = useCompletion({
+  } = useCompletion({ // 与后端 API 保持一致的配置，确保流式传输和性能优化
     api: "/api/optimize",
-    streamProtocol: "text",
+    streamProtocol: "text", // 直接使用文本流，适合中文内容，减少解析开销
     experimental_throttle: 16, // 增加节流以优化前端性能
     onFinish: (prompt: string, completion: string, ...ags) => {
       console.log("Analysis completed", { prompt, completionLength: completion.length, completion, ags });
