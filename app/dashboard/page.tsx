@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useCompletion } from "@ai-sdk/react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function DashboardPage() {
   const [resumeText, setResumeText] = useState("");
@@ -14,9 +16,11 @@ export default function DashboardPage() {
     error,
     complete,
     stop,
+    setCompletion,
   } = useCompletion({
     api: "/api/optimize",
     streamProtocol: "text",
+    experimental_throttle: 16, // 增加节流以优化前端性能
     onFinish: (prompt: string, completion: string, ...ags) => {
       console.log("Analysis completed", { prompt, completionLength: completion.length, completion, ags });
     },
@@ -36,6 +40,8 @@ export default function DashboardPage() {
       jobDescriptionLength: jobDescription.length,
     });
 
+    stop();
+    setCompletion("");
     complete("分析简历", {
       body: {
         resume: resumeText,
@@ -43,6 +49,8 @@ export default function DashboardPage() {
       },
     });
   };
+
+  const hasCompletion = completion.trim().length > 0;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-slate-900 dark:to-gray-900">
@@ -166,10 +174,11 @@ export default function DashboardPage() {
                     </svg>
                     分析结果
                   </label>
-                  {completion && (
+                  {hasCompletion && (
                     <button
                       onClick={() => {
                         stop();
+                        setCompletion("");
                         setResumeText("");
                         setJobDescription("");
                       }}
@@ -181,18 +190,26 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="min-h-[480px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                  {isLoading ? (
+                  {hasCompletion ? (
+                    <div className="max-h-[580px] prose prose-sm max-w-none text-slate-900 dark:prose-invert dark:text-slate-100">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {completion}
+                      </ReactMarkdown>
+                      {isLoading && (
+                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500 dark:bg-blue-400" />
+                          正在流式生成...
+                        </div>
+                      )}
+                    </div>
+                  ) : isLoading ? (
                     <div className="flex h-[432px] items-center justify-center">
                       <div className="flex flex-col items-center gap-4 text-slate-600 dark:text-slate-400">
                         <svg className="h-12 w-12 animate-pulse" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                         </svg>
-                        <span>AI 正在分析中...</span>
+                        <span>AI 正在建立流式响应...</span>
                       </div>
-                    </div>
-                  ) : completion ? (
-                    <div className="max-h-[580px] prose prose-sm max-w-none text-slate-900 dark:prose-invert dark:text-slate-100">
-                      <pre className="whitespace-pre-wrap font-sans text-sm">{completion}</pre>
                     </div>
                   ) : (
                     <div className="flex h-[432px] flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">

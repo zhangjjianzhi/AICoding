@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { streamText } from 'ai';
+import { smoothStream, streamText } from 'ai';
 
 export const maxDuration = 60;
 
@@ -8,6 +8,8 @@ const moonshot = createOpenAICompatible({
   baseURL: 'https://api.moonshot.cn/v1',
   apiKey: process.env.MOONSHOT_API_KEY || '',
 });
+
+const zhSegmenter = new Intl.Segmenter('zh-CN', { granularity: 'grapheme' });
 
 const SYSTEM_PROMPT = `你是一位资深招聘专家，拥有 15 年以上的人力资源和简历筛选经验。你曾为腾讯、字节跳动、阿里巴巴等一线互联网公司招聘过大量优秀人才。
 
@@ -35,7 +37,8 @@ const SYSTEM_PROMPT = `你是一位资深招聘专家，拥有 15 年以上的�
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { resume, jobDescription } = body;
+    const resume = typeof body?.resume === 'string' ? body.resume.trim() : '';
+    const jobDescription = typeof body?.jobDescription === 'string' ? body.jobDescription.trim() : '';
 
     console.log('[API] Received request:', { resumeLength: resume?.length, jobDescriptionLength: jobDescription?.length });
 
@@ -64,13 +67,19 @@ ${resume}`,
         },
       ],
       temperature: 0.7,
+      abortSignal: req.signal,
+      experimental_transform: smoothStream({
+        delayInMs: 18,
+        chunking: zhSegmenter,
+      }),
     });
 
     console.log('[API] Stream created, returning response', result);
     return result.toTextStreamResponse({
       headers: {
-        'Transfer-Encoding': 'chunked',
-        'Connection': 'keep-alive',
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no',
       },
     });
   } catch (error) {
