@@ -50,7 +50,7 @@ INSERT INTO users (name, email, role, status) VALUES
       }
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data } = await supabaseAdmin
       .from('users')
       .select('*')
       .order('id');

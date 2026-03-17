@@ -1,16 +1,8 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-// 导入 AI SDK 中的流式文本处理函数，适合中文文本的平滑流式传输
+import { MOONSHOT_TEXT_MODEL, moonshot } from '@/lib/moonshot'
 import { smoothStream, streamText } from 'ai'
 
 // 设置合理的最大响应时间，避免长时间等待
 export const maxDuration = 60
-
-// 创建一个适合中文文本的 OpenAI 兼容客户端，连接到 Moonshot AI 的 API
-const moonshot = createOpenAICompatible({
-  name: 'moonshot',
-  baseURL: 'https://api.moonshot.cn/v1',
-  apiKey: process.env.MOONSHOT_API_KEY || ''
-})
 
 // 创建一个适合中文文本的分词器，使用 Intl.Segmenter 进行细粒度的分词，适合流式传输
 const zhSegmenter = new Intl.Segmenter('zh-CN', { granularity: 'grapheme' })
@@ -68,7 +60,7 @@ export async function POST (req: Request) {
     console.log('[API] Starting stream with Moonshot AI')
     const result = streamText({
       // 使用适合中文文本的流式文本处理函数，确保输出的流畅性和专业性
-      model: moonshot('moonshot-v1-8k'), // 选择适合中文文本的模型，确保分析的准确性和专业性
+      model: moonshot(MOONSHOT_TEXT_MODEL), // 选择适合中文文本的模型，确保分析的准确性和专业性
       system: SYSTEM_PROMPT, // 使用精心设计的系统提示，指导模型以专业招聘专家的身份进行分析和建议
       messages: [
         {

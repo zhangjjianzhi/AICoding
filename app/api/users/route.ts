@@ -59,9 +59,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST error:', error);
-    return NextResponse.json({ error: '创建用户失败' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : '创建用户失败' },
+      { status: 500 }
+    );
   }
 }
 
@@ -87,9 +90,12 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PUT error:', error);
-    return NextResponse.json({ error: '更新用户失败' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : '更新用户失败' },
+      { status: 500 }
+    );
   }
 }
 
